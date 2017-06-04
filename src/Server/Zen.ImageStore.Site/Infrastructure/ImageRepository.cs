@@ -140,6 +140,12 @@ namespace Zen.ImageStore.Site.Infrastructure
                 throw new ArgumentException("Container does not exist");
             }
 
+            // Create new continuation identifier
+            if (continuationId == Guid.Empty)
+            {
+                continuationId = Guid.NewGuid();
+            }
+
             var continuationToken = _memoryCache
                 .Get<BlobContinuationToken>($"ISIC:{continuationId}");
             var results = await containerReference
@@ -154,6 +160,58 @@ namespace Zen.ImageStore.Site.Infrastructure
                     cancellationToken)
                 .ConfigureAwait(false);
 
+            // Save the continuation token in the cache if needed
+
+            // Update the cache entry if necessary
+            if (results.ContinuationToken != null)
+            {
+                _memoryCache.Set<BlobContinuationToken>(
+                    $"ISIC:{continuationId}",
+                    results.ContinuationToken,
+                    DateTimeOffset.UtcNow.AddHours(1));
+            }
+            else
+            {
+                _memoryCache.Remove($"ISIC:{continuationId}");
+                continuationId = Guid.Empty;
+            }
+
+            // Return transformed blob result object
+
+        }
+
+        public async Task<string> CopyImageAsync(
+            string sourceContainer, string pathname, string targetContainer, CancellationToken cancellationToken)
+        {
+            var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
+            var sourceContainerReference = blobClient.GetContainerReference(sourceContainer);
+            if (!await sourceContainerReference.ExistsAsync(cancellationToken).ConfigureAwait(false))
+            {
+                throw new ArgumentException("Source container does not exist");
+            }
+            var targetContainerReference = blobClient.GetContainerReference(targetContainer);
+            if(!await targetContainerReference.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false))
+            {
+                throw new ArgumentException("Cannot create target container");
+            }
+
+            var sourceBlobRef = sourceContainerReference.GetBlobReference(pathname);
+            var targetBlobRef = targetContainerReference.GetBlobReference(pathname);
+            return await targetBlobRef.StartCopyAsync(sourceBlobRef.Uri, cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task AbortCopyImageAsync(string container, string pathname, string copyId, CancellationToken cancellationToken)
+        {
+            var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
+            var containerReference = blobClient.GetContainerReference(container);
+            if (!await containerReference.ExistsAsync(cancellationToken).ConfigureAwait(false))
+            {
+                throw new ArgumentException("Container does not exist");
+            }
+
+            // Abort the copy operation
+            var blobRef = containerReference.GetBlobReference(pathname);
+            await blobRef.AbortCopyAsync(copyId, cancellationToken).ConfigureAwait(false);
         }
     }
 }

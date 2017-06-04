@@ -87,16 +87,25 @@ namespace Zen.ImageStore.Site
             // Setup middleware
             app.UseStaticFiles();
             app.UseCookieAuthentication();
-            app.UseOpenIdConnectAuthentication(
+
+            // Setup OpenIdConnect
+            var openIdConnectOptions =
                 new OpenIdConnectOptions
                 {
                     ClientId = Configuration["Authentication:AzureAd:ClientId"],
                     ClientSecret = Configuration["Authentication:AzureAd:ClientSecret"],
                     Authority = Configuration["Authentication:AzureAd:AADInstance"] + Configuration["Authentication:AzureAd:TenantId"],
                     CallbackPath = Configuration["Authentication:AzureAd:CallbackPath"],
-                    ResponseType = OpenIdConnectResponseType.CodeIdToken
-                });
+                    ResponseType = OpenIdConnectResponseType.CodeIdToken,
+                    GetClaimsFromUserInfoEndpoint = true
+                };
+            openIdConnectOptions.Scope.Clear();
+            openIdConnectOptions.Scope.Add("openid");
+            openIdConnectOptions.Scope.Add("profile");
+            openIdConnectOptions.Scope.Add("email");
+            app.UseOpenIdConnectAuthentication(openIdConnectOptions);
 
+            // Wire-up MVC default route
             app.UseMvc(
                 routes =>
                 {
