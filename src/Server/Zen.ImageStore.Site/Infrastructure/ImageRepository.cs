@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -42,10 +41,10 @@ namespace Zen.ImageStore.Site.Infrastructure
     /// Finally we make use of metadata headers to store EXIF information.
     /// </para>
     /// </remarks>
-    public class ImageRepository
+    public class ImageRepository : IImageRepository
     {
         private readonly IStorageClientFactory _storageClientFactory;
-        private IMemoryCache _memoryCache;
+        private readonly IMemoryCache _memoryCache;
 
         public ImageRepository(IStorageClientFactory storageClientFactory, IMemoryCache memoryCache)
         {
@@ -127,10 +126,12 @@ namespace Zen.ImageStore.Site.Infrastructure
 
             // Get blob reference and commit new block list
             var blobRef = containerReference.GetBlockBlobReference(pathname);
-            await blobRef.PutBlockListAsync(chunkIds, cancellationToken).ConfigureAwait(false);
+            await blobRef
+                .PutBlockListAsync(chunkIds, cancellationToken)
+                .ConfigureAwait(false);
         }
 
-        public async Task ListImagesAsync(
+        public async Task<IImageEntryCollection> ListImagesAsync(
             string container, string pathname, Guid continuationId, int pageSize, CancellationToken cancellationToken)
         {
             var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
@@ -177,7 +178,22 @@ namespace Zen.ImageStore.Site.Infrastructure
             }
 
             // Return transformed blob result object
-
+            return
+                new ImageEntryCollection
+                {
+                    ContinuationId = continuationId,
+                    Images = results.Results
+                        .Select(i =>
+                            new ImageEntry
+                            {
+                                ContainerName = i.Container.Name,
+                                FolderPrefix = i.Parent?.Prefix ?? string.Empty,
+                                PrimaryUri = i.StorageUri.PrimaryUri,
+                                SecondaryUri = i.StorageUri.SecondaryUri
+                            })
+                        .ToList()
+                        .AsReadOnly()
+                };
         }
 
         public async Task<string> CopyImageAsync(
@@ -197,10 +213,13 @@ namespace Zen.ImageStore.Site.Infrastructure
 
             var sourceBlobRef = sourceContainerReference.GetBlobReference(pathname);
             var targetBlobRef = targetContainerReference.GetBlobReference(pathname);
-            return await targetBlobRef.StartCopyAsync(sourceBlobRef.Uri, cancellationToken).ConfigureAwait(false);
+            return await targetBlobRef
+                .StartCopyAsync(sourceBlobRef.Uri, cancellationToken)
+                .ConfigureAwait(false);
         }
 
-        public async Task AbortCopyImageAsync(string container, string pathname, string copyId, CancellationToken cancellationToken)
+        public async Task AbortCopyImageAsync(
+            string container, string pathname, string copyId, CancellationToken cancellationToken)
         {
             var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
             var containerReference = blobClient.GetContainerReference(container);
@@ -211,7 +230,25 @@ namespace Zen.ImageStore.Site.Infrastructure
 
             // Abort the copy operation
             var blobRef = containerReference.GetBlobReference(pathname);
-            await blobRef.AbortCopyAsync(copyId, cancellationToken).ConfigureAwait(false);
+            await blobRef
+                .AbortCopyAsync(copyId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        public async Task DeleteImageAsync(string container, string pathname, CancellationToken cancellationToken)
+        {
+            var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
+            var containerReference = blobClient.GetContainerReference(container);
+            if (!await containerReference.ExistsAsync(cancellationToken).ConfigureAwait(false))
+            {
+                throw new ArgumentException("Container does not exist");
+            }
+
+            // Abort the copy operation
+            var blobRef = containerReference.GetBlobReference(pathname);
+            await blobRef
+                .DeleteIfExistsAsync(cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 }
