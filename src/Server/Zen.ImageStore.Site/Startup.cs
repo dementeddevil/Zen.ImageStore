@@ -53,9 +53,8 @@ namespace Zen.ImageStore.Site
             // Hookup Autofac dependency injection
             var builder = new ContainerBuilder();
             builder.Populate(services);
-            builder.RegisterType<StorageClientFactory>()
-                .As<IStorageClientFactory>();
-
+            builder.RegisterType<StorageClientFactory>().As<IStorageClientFactory>();
+            builder.RegisterType<ImageRepository>().As<IImageRepository>();
             ApplicationContainer = builder.Build();
 
             // Create the IServiceProvider based on the container.

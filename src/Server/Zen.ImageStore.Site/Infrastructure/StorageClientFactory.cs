@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.WindowsAzure.Storage;
@@ -44,9 +42,7 @@ namespace Zen.ImageStore.Site.Infrastructure
         private async Task<string> GetStorageKeyAsync()
         {
             // Create keyvault client
-            var client = new KeyVaultClient(
-                GetAccessTokenAsync,
-                new System.Net.Http.HttpClient());
+            var client = new KeyVaultClient(GetAccessTokenAsync, new HttpClient());
 
             // Pull storage access key from the vault
             var vaultUrl = Configuration["Security:VaultUrl"];

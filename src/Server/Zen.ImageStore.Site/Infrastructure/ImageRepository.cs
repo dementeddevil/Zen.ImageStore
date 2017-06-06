@@ -3,9 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
-using Microsoft.WindowsAzure.Storage.Table;
 using Zen.ImageStore.Site.Domain.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 
