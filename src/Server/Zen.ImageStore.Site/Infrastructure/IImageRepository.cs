@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,6 +8,8 @@ namespace Zen.ImageStore.Site.Infrastructure
 {
     public interface IImageRepository
     {
+        Task<ICollection<string>> ListImageContainersAsync(CancellationToken cancellationToken);
+
         Task UploadEntireImageAsync(string container, string pathname, Stream imageContent, CancellationToken cancellationToken);
 
         Task BeginUploadChunkedImageAsync(string container, string pathname, CancellationToken cancellationToken);
