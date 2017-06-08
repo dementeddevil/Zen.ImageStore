@@ -42,6 +42,8 @@ namespace Zen.ImageStore.Site.Infrastructure
     /// </remarks>
     public class ImageRepository : IImageRepository
     {
+        public const string DefaultContainerName = "default";
+
         private readonly IStorageClientFactory _storageClientFactory;
         private readonly IMemoryCache _memoryCache;
 
@@ -53,16 +55,48 @@ namespace Zen.ImageStore.Site.Infrastructure
 
         public async Task<ICollection<string>> ListImageContainersAsync(CancellationToken cancellationToken)
         {
+            var results = new List<string>();
+
             var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
-            return blobClient.ListContainers()
-                .Where(c => c.Name != "default")
-                .Select(c => c.Name)
-                .ToList();
+            BlobContinuationToken continuationToken = null;
+            do
+            {
+                // Get the next block of containers
+                var containers = await blobClient
+                    .ListContainersSegmentedAsync(continuationToken, cancellationToken)
+                    .ConfigureAwait(false);
+                continuationToken = containers.ContinuationToken;
+
+                results.AddRange(containers.Results.Select(c => c.Name));
+            } while (continuationToken != null);
+
+            return results.Where(c => !string.Equals(c, DefaultContainerName, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        public async Task DeleteImageContainerAsync(string container, CancellationToken cancellationToken)
+        {
+            if (container == null)
+            {
+                throw new ArgumentNullException(nameof(container));
+            }
+            if (string.Equals(container, DefaultContainerName, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("Cannot delete default container");
+            }
+
+            var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
+            var containerReference = blobClient.GetContainerReference(container);
+            await containerReference.DeleteIfExistsAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public async Task UploadEntireImageAsync(
             string container, string pathname, Stream imageContent, CancellationToken cancellationToken)
         {
+            if (container == null)
+            {
+                throw new ArgumentNullException(nameof(container));
+            }
+
             var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
             var containerReference = blobClient.GetContainerReference(container);
             if (!containerReference.CreateIfNotExists())
@@ -84,6 +118,11 @@ namespace Zen.ImageStore.Site.Infrastructure
         public async Task BeginUploadChunkedImageAsync(
             string container, string pathname, CancellationToken cancellationToken)
         {
+            if (container == null)
+            {
+                throw new ArgumentNullException(nameof(container));
+            }
+
             // Chunks can be a maximum of 1MB in size (this is an imposed limit to ensure we have good feedback in the UI even with crappy connections)
             var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
             var containerReference = blobClient.GetContainerReference(container);
@@ -92,7 +131,6 @@ namespace Zen.ImageStore.Site.Infrastructure
                 throw new ArgumentException("Failed to create container");
             }
 
-            // If blob exists then create a snapshot of the current blob first
             var blobRef = containerReference.GetBlockBlobReference(pathname);
             if (await blobRef.ExistsAsync(cancellationToken).ConfigureAwait(false))
             {
@@ -103,6 +141,11 @@ namespace Zen.ImageStore.Site.Infrastructure
         public async Task UploadChunkedImageAsync(
             string container, string pathname, string chunkId, Stream content, string contentMd5, CancellationToken cancellationToken)
         {
+            if (container == null)
+            {
+                throw new ArgumentNullException(nameof(container));
+            }
+
             // Chunks can be a maximum of 1MB in size (this is an imposed limit to ensure we have good feedback in the UI even with crappy connections)
             var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
             var containerReference = blobClient.GetContainerReference(container);
@@ -111,7 +154,6 @@ namespace Zen.ImageStore.Site.Infrastructure
                 throw new ArgumentException("Container does not exist");
             }
 
-            // Upload blob block
             var blobRef = containerReference.GetBlockBlobReference(pathname);
             await blobRef
                 .PutBlockAsync(
@@ -125,6 +167,11 @@ namespace Zen.ImageStore.Site.Infrastructure
         public async Task CommitUploadChunkedImageAsync(
             string container, string pathname, string[] chunkIds, CancellationToken cancellationToken)
         {
+            if (container == null)
+            {
+                throw new ArgumentNullException(nameof(container));
+            }
+
             var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
             var containerReference = blobClient.GetContainerReference(container);
             if (!await containerReference.ExistsAsync(cancellationToken).ConfigureAwait(false))
@@ -132,7 +179,6 @@ namespace Zen.ImageStore.Site.Infrastructure
                 throw new ArgumentException("Container does not exist");
             }
 
-            // Get blob reference and commit new block list
             var blobRef = containerReference.GetBlockBlobReference(pathname);
             await blobRef
                 .PutBlockListAsync(chunkIds, cancellationToken)
@@ -142,6 +188,11 @@ namespace Zen.ImageStore.Site.Infrastructure
         public async Task<IImageEntryCollection> ListImagesAsync(
             string container, string pathname, Guid continuationId, int pageSize, CancellationToken cancellationToken)
         {
+            if (container == null)
+            {
+                throw new ArgumentNullException(nameof(container));
+            }
+
             var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
             var containerReference = blobClient.GetContainerReference(container);
             if (!await containerReference.ExistsAsync(cancellationToken).ConfigureAwait(false))
@@ -168,8 +219,6 @@ namespace Zen.ImageStore.Site.Infrastructure
                     null,
                     cancellationToken)
                 .ConfigureAwait(false);
-
-            // Save the continuation token in the cache if needed
 
             // Update the cache entry if necessary
             if (results.ContinuationToken != null)
@@ -207,6 +256,23 @@ namespace Zen.ImageStore.Site.Infrastructure
         public async Task<string> CopyImageAsync(
             string sourceContainer, string pathname, string targetContainer, CancellationToken cancellationToken)
         {
+            if (sourceContainer == null)
+            {
+                throw new ArgumentNullException(nameof(sourceContainer));
+            }
+            if (targetContainer == null)
+            {
+                throw new ArgumentNullException(nameof(targetContainer));
+            }
+            if (string.Equals(sourceContainer, targetContainer, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("Target container cannot be same as source.", nameof(targetContainer));
+            }
+            if (string.Equals(targetContainer, DefaultContainerName, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("Target container cannot be default.", nameof(targetContainer));
+            }
+
             var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
             var sourceContainerReference = blobClient.GetContainerReference(sourceContainer);
             if (!await sourceContainerReference.ExistsAsync(cancellationToken).ConfigureAwait(false))
@@ -229,6 +295,15 @@ namespace Zen.ImageStore.Site.Infrastructure
         public async Task AbortCopyImageAsync(
             string container, string pathname, string copyId, CancellationToken cancellationToken)
         {
+            if (container == null)
+            {
+                throw new ArgumentNullException(nameof(container));
+            }
+            if (string.Equals(container, DefaultContainerName, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("Container cannot be default.", nameof(container));
+            }
+
             var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
             var containerReference = blobClient.GetContainerReference(container);
             if (!await containerReference.ExistsAsync(cancellationToken).ConfigureAwait(false))
@@ -236,7 +311,6 @@ namespace Zen.ImageStore.Site.Infrastructure
                 throw new ArgumentException("Container does not exist");
             }
 
-            // Abort the copy operation
             var blobRef = containerReference.GetBlobReference(pathname);
             await blobRef
                 .AbortCopyAsync(copyId, cancellationToken)
@@ -245,6 +319,11 @@ namespace Zen.ImageStore.Site.Infrastructure
 
         public async Task DeleteImageAsync(string container, string pathname, CancellationToken cancellationToken)
         {
+            if (container == null)
+            {
+                throw new ArgumentNullException(nameof(container));
+            }
+
             var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
             var containerReference = blobClient.GetContainerReference(container);
             if (!await containerReference.ExistsAsync(cancellationToken).ConfigureAwait(false))
@@ -252,7 +331,6 @@ namespace Zen.ImageStore.Site.Infrastructure
                 throw new ArgumentException("Container does not exist");
             }
 
-            // Abort the copy operation
             var blobRef = containerReference.GetBlobReference(pathname);
             await blobRef
                 .DeleteIfExistsAsync(cancellationToken)

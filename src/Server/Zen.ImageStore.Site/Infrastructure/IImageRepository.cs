@@ -10,6 +10,8 @@ namespace Zen.ImageStore.Site.Infrastructure
     {
         Task<ICollection<string>> ListImageContainersAsync(CancellationToken cancellationToken);
 
+        Task DeleteImageContainerAsync(string container, CancellationToken cancellationToken);
+
         Task UploadEntireImageAsync(string container, string pathname, Stream imageContent, CancellationToken cancellationToken);
 
         Task BeginUploadChunkedImageAsync(string container, string pathname, CancellationToken cancellationToken);
