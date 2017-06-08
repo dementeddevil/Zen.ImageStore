@@ -91,7 +91,7 @@ namespace Zen.ImageStore.Site.Infrastructure
         }
 
         public async Task UploadChunkedImageAsync(
-            string container, string pathname, string chunkId, Stream content, string contentMD5, CancellationToken cancellationToken)
+            string container, string pathname, string chunkId, Stream content, string contentMd5, CancellationToken cancellationToken)
         {
             // Chunks can be a maximum of 1MB in size (this is an imposed limit to ensure we have good feedback in the UI even with crappy connections)
             var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
@@ -107,7 +107,7 @@ namespace Zen.ImageStore.Site.Infrastructure
                 .PutBlockAsync(
                     chunkId,
                     content,
-                    contentMD5,
+                    contentMd5,
                     cancellationToken)
                 .ConfigureAwait(false);
         }
