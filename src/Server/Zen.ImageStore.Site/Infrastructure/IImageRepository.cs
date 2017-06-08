@@ -16,7 +16,7 @@ namespace Zen.ImageStore.Site.Infrastructure
 
         Task BeginUploadChunkedImageAsync(string container, string pathname, CancellationToken cancellationToken);
 
-        Task UploadChunkedImageAsync(string container, string pathname, string chunkId, Stream content, string contentMD5, CancellationToken cancellationToken);
+        Task UploadChunkedImageAsync(string container, string pathname, string chunkId, Stream content, string contentMd5, CancellationToken cancellationToken);
 
         Task CommitUploadChunkedImageAsync(string container, string pathname, string[] chunkIds, CancellationToken cancellationToken);
 
