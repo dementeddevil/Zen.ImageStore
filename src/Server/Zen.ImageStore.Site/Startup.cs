@@ -12,6 +12,8 @@ using Microsoft.Extensions.Caching;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Configuration;
 using Zen.ImageStore.Site.Domain.Interfaces;
 using Zen.ImageStore.Site.Infrastructure;
 
@@ -45,6 +47,26 @@ namespace Zen.ImageStore.Site
             // Add framework services.
             services.AddMvc();
             services.AddMemoryCache();
+            services.AddSignalR(
+                options =>
+                {
+                    options.EnableJSONP = true;
+                    options.Hubs =
+                        new HubOptions
+                        {
+                            EnableDetailedErrors = true,
+                        };
+                    options.Transports =
+                        new TransportOptions
+                        {
+                            EnabledTransports = TransportType.All,
+                            WebSockets =
+                                new WebSocketOptions
+                                {
+                                    MaxIncomingMessageSize = 1200 * 1024
+                                }
+                        };
+                });
 
             // Wire up authentication middleware to cookie auth scheme
             services.AddAuthentication(
@@ -103,6 +125,9 @@ namespace Zen.ImageStore.Site
             openIdConnectOptions.Scope.Add("profile");
             openIdConnectOptions.Scope.Add("email");
             app.UseOpenIdConnectAuthentication(openIdConnectOptions);
+
+            // Wire-up SignalR
+            app.UseSignalR();
 
             // Wire-up MVC default route
             app.UseMvc(

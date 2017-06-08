@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Zen.ImageStore.Site.Domain.Interfaces;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace Zen.ImageStore.Site.Infrastructure
 {
@@ -48,6 +49,15 @@ namespace Zen.ImageStore.Site.Infrastructure
         {
             _storageClientFactory = storageClientFactory;
             _memoryCache = memoryCache;
+        }
+
+        public async Task<ICollection<string>> ListImageContainersAsync(CancellationToken cancellationToken)
+        {
+            var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
+            return blobClient.ListContainers()
+                .Where(c => c.Name != "default")
+                .Select(c => c.Name)
+                .ToList();
         }
 
         public async Task UploadEntireImageAsync(
@@ -204,7 +214,7 @@ namespace Zen.ImageStore.Site.Infrastructure
                 throw new ArgumentException("Source container does not exist");
             }
             var targetContainerReference = blobClient.GetContainerReference(targetContainer);
-            if(!await targetContainerReference.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false))
+            if (!await targetContainerReference.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false))
             {
                 throw new ArgumentException("Cannot create target container");
             }
