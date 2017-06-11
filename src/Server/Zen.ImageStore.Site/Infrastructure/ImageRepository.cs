@@ -250,7 +250,7 @@ namespace Zen.ImageStore.Site.Infrastructure
                                 ContainerName = i.Container.Name,
                                 FolderPrefix = i.Parent?.Prefix ?? string.Empty,
                                 PrimaryUri = i.StorageUri.PrimaryUri,
-                                SecondaryUri = i.StorageUri.SecondaryUri
+                                SecondaryUri = i.StorageUri.SecondaryUri,
                             })
                         .ToList()
                         .AsReadOnly()
