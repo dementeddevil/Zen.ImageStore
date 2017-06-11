@@ -12,7 +12,7 @@ namespace Zen.ImageStore.Site.Infrastructure
 
         Task DeleteImageContainerAsync(string container, CancellationToken cancellationToken);
 
-        Task UploadEntireImageAsync(string container, string pathname, Stream imageContent, CancellationToken cancellationToken);
+        Task UploadEntireImageAsync(string container, string pathname, Stream imageContent, string contentType, CancellationToken cancellationToken);
 
         Task BeginUploadChunkedImageAsync(string container, string pathname, CancellationToken cancellationToken);
 
@@ -21,6 +21,10 @@ namespace Zen.ImageStore.Site.Infrastructure
         Task CommitUploadChunkedImageAsync(string container, string pathname, string[] chunkIds, CancellationToken cancellationToken);
 
         Task<IImageEntryCollection> ListImagesAsync(string container, string pathname, Guid continuationId, int pageSize, CancellationToken cancellationToken);
+
+        Task<IImageEntry> GetImageAsync(string container, string pathname, CancellationToken cancellationToken);
+
+        Task GetImageStreamAsync(string container, string pathname, Stream stream, CancellationToken cancellationToken);
 
         Task<string> CopyImageAsync(string sourceContainer, string pathname, string targetContainer, CancellationToken cancellationToken);
 
