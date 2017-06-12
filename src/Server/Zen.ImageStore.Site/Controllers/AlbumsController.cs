@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -46,25 +46,72 @@ namespace Zen.ImageStore.Site.Controllers
         }
 
         [HttpGet]
+        [Route("{album}/{pathname}", Name = "GetAlbumImage")]
         public async Task<IActionResult> GetAlbumImageAsync(
             CancellationToken cancellationToken,
             string album, string pathname,
-            int? width = null,
-            int? height = null,
-            bool? preserveAspectRatio = true)
+            [FromQuery] int? width = null,
+            [FromQuery] int? height = null)
         {
             // Create temporary stream and pull content from blob
-            var memoryStream = new MemoryStream();
-            await _imageRepository
-                .GetImageStreamAsync(album, pathname, memoryStream, cancellationToken)
+            var sourceImageStream = new MemoryStream();
+            var blobInfo = await _imageRepository
+                .GetImageStreamAsync(album, pathname, sourceImageStream, cancellationToken)
                 .ConfigureAwait(true);
+            sourceImageStream.Position = 0;
 
             // Load image into GDI object
-            using (var originalImage = Bitmap.FromStream(memoryStream))
+            var originalImage = Image.FromStream(sourceImageStream);
+
+            // Resize image based on parameters
+            var desiredSize = new Size(originalImage.Width, originalImage.Height);
+            if (width.HasValue && width != desiredSize.Width &&
+                height.HasValue && height != desiredSize.Height)
             {
-                var renderImage = 
+                desiredSize = new Size(width.Value, height.Value);
             }
-                return File()
+            else if (width.HasValue && width != desiredSize.Width ||
+                height.HasValue && height != desiredSize.Height)
+            {
+                desiredSize = new Size(
+                    width.GetValueOrDefault(0),
+                    height.GetValueOrDefault(0));
+
+                if (width.HasValue)
+                {
+                    var factor =
+                        ((double) width.Value) /
+                        ((double) originalImage.Width);
+                    desiredSize.Height = (int)(((double) originalImage.Height) * factor);
+                }
+                else
+                {
+                    var factor =
+                        ((double)height.Value) /
+                        ((double)originalImage.Height);
+                    desiredSize.Width = (int)(((double)originalImage.Width) * factor);
+                }
+            }
+
+            // Determine image we will render to the client
+            var renderImage = originalImage;
+            if (desiredSize.Width != originalImage.Width ||
+                desiredSize.Height != originalImage.Height)
+            {
+                renderImage = originalImage
+                    .GetThumbnailImage(
+                        desiredSize.Width, desiredSize.Height,
+                        () => cancellationToken.IsCancellationRequested,
+                        IntPtr.Zero);
+            }
+
+            // Save image to temporary stream
+            var targetImageStream = new MemoryStream();
+            renderImage.Save(targetImageStream, GetImageFormatFrom(pathname));
+            originalImage.Dispose();
+            renderImage.Dispose();
+
+            return File(targetImageStream, blobInfo.ContentType, Path.GetFileName(pathname));
         }
 
         [HttpPost]
@@ -75,12 +122,39 @@ namespace Zen.ImageStore.Site.Controllers
             var imageContent = Request.Body;
             await _imageRepository
                 .UploadEntireImageAsync(
-                    album, pathname, imageContent, cancellationToken)
+                    album,
+                    pathname,
+                    imageContent,
+                    Request.ContentType,
+                    cancellationToken)
                 .ConfigureAwait(true);
             return CreatedAtAction(
                 "GetAlbumImage",
                 new { album, pathname },
                 "");
+        }
+
+        private ImageFormat GetImageFormatFrom(string pathname)
+        {
+            var extn = Path.GetExtension(pathname).ToLower();
+            switch (extn)
+            {
+                case ".bmp":
+                    return ImageFormat.Bmp;
+                case ".png":
+                    return ImageFormat.Png;
+                case ".gif":
+                    return ImageFormat.Gif;
+                case ".jpg":
+                case ".jpeg":
+                    return ImageFormat.Jpeg;
+                case ".tiff":
+                    return ImageFormat.Tiff;
+                case ".exif":
+                    return ImageFormat.Exif;
+                default:
+                    return ImageFormat.Wmf;
+            }
         }
     }
 }

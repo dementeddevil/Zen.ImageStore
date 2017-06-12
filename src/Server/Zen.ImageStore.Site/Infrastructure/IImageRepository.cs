@@ -24,7 +24,7 @@ namespace Zen.ImageStore.Site.Infrastructure
 
         Task<IImageEntry> GetImageAsync(string container, string pathname, CancellationToken cancellationToken);
 
-        Task GetImageStreamAsync(string container, string pathname, Stream stream, CancellationToken cancellationToken);
+        Task<IImageEntry> GetImageStreamAsync(string container, string pathname, Stream stream, CancellationToken cancellationToken);
 
         Task<string> CopyImageAsync(string sourceContainer, string pathname, string targetContainer, CancellationToken cancellationToken);
 

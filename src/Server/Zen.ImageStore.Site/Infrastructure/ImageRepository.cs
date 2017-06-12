@@ -282,7 +282,7 @@ namespace Zen.ImageStore.Site.Infrastructure
             };
         }
 
-        public async Task GetImageStreamAsync(string container, string pathname, Stream stream, CancellationToken cancellationToken)
+        public async Task<IImageEntry> GetImageStreamAsync(string container, string pathname, Stream stream, CancellationToken cancellationToken)
         {
             if (container == null)
             {
@@ -300,6 +300,14 @@ namespace Zen.ImageStore.Site.Infrastructure
             await blobRef
                 .DownloadToStreamAsync(stream, cancellationToken)
                 .ConfigureAwait(false);
+            return new ImageEntry
+            {
+                ContainerName = containerReference.Name,
+                FolderPrefix = blobRef.Parent.Prefix,
+                PrimaryUri = blobRef.StorageUri.PrimaryUri,
+                SecondaryUri = blobRef.StorageUri.SecondaryUri,
+                ContentType = blobRef.Properties.ContentType
+            };
         }
 
         public async Task<string> CopyImageAsync(
