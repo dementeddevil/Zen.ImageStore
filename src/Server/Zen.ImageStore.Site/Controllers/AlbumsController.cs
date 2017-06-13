@@ -21,17 +21,48 @@ namespace Zen.ImageStore.Site.Controllers
             _imageRepository = imageRepository;
         }
 
-        // GET: api/albums
         [HttpGet]
         [Route("")]
-        public async Task<IEnumerable<string>> GetAsync(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAlbumsAsync(
+            CancellationToken cancellationToken)
         {
-            return await _imageRepository
+            var albums = await _imageRepository
                 .ListImageContainersAsync(cancellationToken)
                 .ConfigureAwait(true);
+            return Ok(albums);
         }
 
-        // GET api/values/5
+        [HttpDelete]
+        [Route("{album}")]
+        public async Task<IActionResult> DeleteAlbumAsync(
+            CancellationToken cancellationToken, string album)
+        {
+            await _imageRepository
+                .DeleteImageContainerAsync(album, cancellationToken)
+                .ConfigureAwait(true);
+            return Ok();
+        }
+
+        [HttpPost]
+        [Route("{album}/{pathname}")]
+        public async Task<IActionResult> PostEntireImageAsync(
+            CancellationToken cancellationToken, string album, string pathname)
+        {
+            var imageContent = Request.Body;
+            await _imageRepository
+                .UploadEntireImageAsync(
+                    album,
+                    pathname,
+                    imageContent,
+                    Request.ContentType,
+                    cancellationToken)
+                .ConfigureAwait(true);
+            return CreatedAtAction(
+                "GetAlbumImageAsync",
+                new { album, pathname },
+                "");
+        }
+
         [HttpGet]
         [Route("{album}")]
         public async Task<IEnumerable<string>> GetAlbumImagesAsync(
@@ -46,7 +77,7 @@ namespace Zen.ImageStore.Site.Controllers
         }
 
         [HttpGet]
-        [Route("{album}/{pathname}", Name = "GetAlbumImage")]
+        [Route("{album}/{pathname}", Name = "GetAlbumImageAsync")]
         public async Task<IActionResult> GetAlbumImageAsync(
             CancellationToken cancellationToken,
             string album, string pathname,
@@ -112,26 +143,6 @@ namespace Zen.ImageStore.Site.Controllers
             renderImage.Dispose();
 
             return File(targetImageStream, blobInfo.ContentType, Path.GetFileName(pathname));
-        }
-
-        [HttpPost]
-        [Route("{album}/{pathname}")]
-        public async Task<IActionResult> PostEntireImageAsync(
-            CancellationToken cancellationToken, string album, string pathname)
-        {
-            var imageContent = Request.Body;
-            await _imageRepository
-                .UploadEntireImageAsync(
-                    album,
-                    pathname,
-                    imageContent,
-                    Request.ContentType,
-                    cancellationToken)
-                .ConfigureAwait(true);
-            return CreatedAtAction(
-                "GetAlbumImage",
-                new { album, pathname },
-                "");
         }
 
         private ImageFormat GetImageFormatFrom(string pathname)
