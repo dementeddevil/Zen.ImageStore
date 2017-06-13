@@ -31,6 +31,7 @@ namespace Zen.ImageStore.Site.Controllers
         // GET api/values/5
         [HttpGet("{album}")]
         public async Task<IEnumerable<string>> GetAlbumImagesAsync(
+
             string album,
             [FromQuery]string pathname,
             CancellationToken cancellationToken)
