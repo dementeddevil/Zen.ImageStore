@@ -90,7 +90,7 @@ namespace Zen.ImageStore.Site.Infrastructure
         }
 
         public async Task UploadEntireImageAsync(
-            string container, string pathname, Stream imageContent, CancellationToken cancellationToken)
+            string container, string pathname, Stream imageContent, string contentType, CancellationToken cancellationToken)
         {
             if (container == null)
             {
@@ -109,6 +109,10 @@ namespace Zen.ImageStore.Site.Infrastructure
             if (await blobRef.ExistsAsync(cancellationToken).ConfigureAwait(false))
             {
                 await blobRef.CreateSnapshotAsync(cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                blobRef.Properties.ContentType = contentType;
             }
 
             // Upload the image to the base blob
@@ -246,11 +250,64 @@ namespace Zen.ImageStore.Site.Infrastructure
                                 ContainerName = i.Container.Name,
                                 FolderPrefix = i.Parent?.Prefix ?? string.Empty,
                                 PrimaryUri = i.StorageUri.PrimaryUri,
-                                SecondaryUri = i.StorageUri.SecondaryUri
+                                SecondaryUri = i.StorageUri.SecondaryUri,
                             })
                         .ToList()
                         .AsReadOnly()
                 };
+        }
+
+        public async Task<IImageEntry> GetImageAsync(string container, string pathname, CancellationToken cancellationToken)
+        {
+            if (container == null)
+            {
+                throw new ArgumentNullException(nameof(container));
+            }
+
+            var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
+            var containerReference = blobClient.GetContainerReference(container);
+            if (!await containerReference.ExistsAsync(cancellationToken).ConfigureAwait(false))
+            {
+                throw new ArgumentException("Container does not exist");
+            }
+
+            var blobRef = containerReference.GetBlobReference(pathname);
+            return new ImageEntry
+            {
+                ContainerName = containerReference.Name,
+                FolderPrefix = blobRef.Parent.Prefix,
+                PrimaryUri = blobRef.StorageUri.PrimaryUri,
+                SecondaryUri = blobRef.StorageUri.SecondaryUri,
+                ContentType = blobRef.Properties.ContentType
+            };
+        }
+
+        public async Task<IImageEntry> GetImageStreamAsync(string container, string pathname, Stream stream, CancellationToken cancellationToken)
+        {
+            if (container == null)
+            {
+                throw new ArgumentNullException(nameof(container));
+            }
+
+            var blobClient = await _storageClientFactory.CreateBlobClientAsync().ConfigureAwait(false);
+            var containerReference = blobClient.GetContainerReference(container);
+            if (!await containerReference.ExistsAsync(cancellationToken).ConfigureAwait(false))
+            {
+                throw new ArgumentException("Container does not exist");
+            }
+
+            var blobRef = containerReference.GetBlobReference(pathname);
+            await blobRef
+                .DownloadToStreamAsync(stream, cancellationToken)
+                .ConfigureAwait(false);
+            return new ImageEntry
+            {
+                ContainerName = containerReference.Name,
+                FolderPrefix = blobRef.Parent.Prefix,
+                PrimaryUri = blobRef.StorageUri.PrimaryUri,
+                SecondaryUri = blobRef.StorageUri.SecondaryUri,
+                ContentType = blobRef.Properties.ContentType
+            };
         }
 
         public async Task<string> CopyImageAsync(

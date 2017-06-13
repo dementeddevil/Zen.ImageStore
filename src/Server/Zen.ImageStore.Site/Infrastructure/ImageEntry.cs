@@ -11,5 +11,7 @@ namespace Zen.ImageStore.Site.Infrastructure
         public Uri PrimaryUri { get; set; }
 
         public Uri SecondaryUri { get; set; }
+
+        public string ContentType { get; set; }
     }
 }
