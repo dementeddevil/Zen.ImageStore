@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "lib": [ "es2015", "dom" ],
+    "module": "system",
+    "moduleResolution": "node",
+    "noEmitOnError": true,
+    "noResolve": false,
+    "noImplicitAny": false,
+    "removeComments": false,
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "target": "es5",
+    "types": [ "node" ]
+  },
+  "exclude": [
+    "node_modules",
+    "wwwroot"
+  ]
+}
