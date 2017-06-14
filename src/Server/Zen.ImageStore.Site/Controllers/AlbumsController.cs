@@ -63,6 +63,56 @@ namespace Zen.ImageStore.Site.Controllers
                 "");
         }
 
+        [HttpPost]
+        [Route("{album}/{pathname}/chunked")]
+        public async Task<IActionResult> BeginPostChunkedImageAsync(
+            CancellationToken cancellationToken,
+            string album, string pathname)
+        {
+            // TODO: Pass request to underlying service
+            // create cookie to remember this upload
+
+            // TODO: Return new route with cookie
+            return CreatedAtRoute(
+                "PatchChunkedImage",
+                new
+                {
+                    album,
+                    pathname,
+                },
+                "");
+        }
+
+        [HttpPatch]
+        [Route("{album}/{pathname}/chunked/{imageId}/{chunkId}")]
+        public async Task<IActionResult> PatchChunkedImageAsync(
+            CancellationToken cancellationToken,
+            string album, string pathname, string uploadId, int chunkId)
+        {
+            // TODO: Pass stream to underlying service
+
+            return Accepted();
+        }
+
+        [HttpPatch]
+        [Route("{album}/{pathname}/chunked/{imageId}")]
+        public async Task<IActionResult> CompleteChunkedImageAsync(
+            CancellationToken cancellationToken,
+            string album, string pathname, string uploadId, int[] chunkIds)
+        {
+            // TODO: Complete upload using the specified chunks
+
+            return CreatedAtRoute(
+                "GetAlbumImage",
+                new
+                {
+                    album,
+                    pathname
+                },
+                "");
+        }
+
+
         [HttpGet]
         [Route("{album}")]
         public async Task<IEnumerable<string>> GetAlbumImagesAsync(
