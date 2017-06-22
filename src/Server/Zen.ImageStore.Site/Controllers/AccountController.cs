@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +13,9 @@ namespace Zen.ImageStore.Site.Controllers
         public IActionResult SignIn()
         {
             return Challenge(
-                new AuthenticationProperties { RedirectUri = "/" }, OpenIdConnectDefaults.AuthenticationScheme);
+                new AuthenticationProperties
+                { RedirectUri = "/" },
+                OpenIdConnectDefaults.AuthenticationScheme);
         }
 
         //
@@ -25,9 +23,12 @@ namespace Zen.ImageStore.Site.Controllers
         [HttpGet]
         public IActionResult SignOut()
         {
-            var callbackUrl = Url.Action(nameof(SignedOut), "Account", values: null, protocol: Request.Scheme);
-            return SignOut(new AuthenticationProperties { RedirectUri = callbackUrl },
-                CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme);
+            var callbackUrl = Url.Action(
+                nameof(SignedOut), "Account", values: null, protocol: Request.Scheme);
+            return SignOut(
+                new AuthenticationProperties { RedirectUri = callbackUrl },
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                OpenIdConnectDefaults.AuthenticationScheme);
         }
 
         //
