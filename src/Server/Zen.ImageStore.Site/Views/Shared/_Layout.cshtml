@@ -40,13 +40,13 @@
     <a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
     <div class="container">
         <header class="row" role="banner">
-            <nav class="navbar navbar-inverse bg-faded">
+            <nav class="navbar navbar-toggleable-sm sticky-top navbar-inverse bg-faded">
                 <button class="navbar-toggler hidden-sm-up" type="button" data-toggle="collapse" data-target="#mainMenuNav">
-                    &#9776;
+                    <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="collapse navbar-toggleable-xs" id="mainMenuNav">
-                    <a asp-controller="Home" asp-action="Index" class="navbar-brand">Zen Image Store</a>
-                    <ul class="nav navbar-nav">
+                <a asp-controller="Home" asp-action="Index" class="navbar-brand">Zen Image Store</a>
+                <div class="collapse navbar-collapse" id="mainMenuNav">
+                    <ul class="navbar-nav mr-auto">
                         <li class="nav-item"><a asp-controller="Home" asp-action="Index" class="nav-link">Home</a></li>
                         <li class="nav-item"><a asp-controller="Home" asp-action="About" class="nav-link">About</a></li>
                         <li class="nav-item"><a asp-controller="Home" asp-action="Contact" class="nav-link">Contact</a></li>
@@ -60,10 +60,8 @@
         </main>
 
         <footer class="row" role="contentinfo">
-            <div class="container">
-                <hr />
-                <p>&copy; Zen Design Software @DateTime.Now.Year</p>
-            </div>
+            <hr />
+            <p>&copy; Zen Design Software @DateTime.Now.Year</p>
         </footer>
     </div>
     <script src="~/js/sitecore.js"></script>
