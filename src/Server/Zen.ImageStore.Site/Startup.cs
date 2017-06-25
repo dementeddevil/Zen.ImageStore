@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -14,6 +15,7 @@ using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Configuration;
+using Swashbuckle.Swagger.Model;
 using Zen.ImageStore.Site.Domain.Interfaces;
 using Zen.ImageStore.Site.Infrastructure;
 
@@ -45,6 +47,25 @@ namespace Zen.ImageStore.Site
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
+            services.AddSwaggerGen(
+                options =>
+                {
+                    options.SingleApiVersion(
+                        new Info
+                        {
+                            Title = "Zen Image Store API",
+                            Description = "A set of APIs for interacting with the Zen Image Store.",
+                            Version = "v1",
+                            Contact =
+                                new Contact
+                                {
+                                    Name = "Zen Image Store Developer Support",
+                                    Url = "http://www.zendesignsoftware.com/imagestore/api",
+                                    Email = "imagestoresupport@zendesignsoftware.com"
+                                }
+                        });
+                    options.OperationFilter<RemoveCancellationTokenOperationFilter>();
+                });
             services.AddMvc();
             services.AddMemoryCache();
             services.AddSignalR(
@@ -75,6 +96,7 @@ namespace Zen.ImageStore.Site
             // Hookup Autofac dependency injection
             var builder = new ContainerBuilder();
             builder.Populate(services);
+            builder.RegisterInstance(Configuration);
             builder.RegisterType<StorageClientFactory>().As<IStorageClientFactory>();
             builder.RegisterType<ImageRepository>().As<IImageRepository>();
             ApplicationContainer = builder.Build();
@@ -128,6 +150,10 @@ namespace Zen.ImageStore.Site
 
             // Wire-up SignalR
             app.UseSignalR();
+
+            // Wire-up Swagger
+            app.UseSwagger();
+            app.UseSwaggerUi();
 
             // Wire-up MVC default route
             app.UseMvc(

@@ -11,11 +11,17 @@ using Zen.ImageStore.Site.Infrastructure;
 
 namespace Zen.ImageStore.Site.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/albums")]
     public class AlbumsController : Controller
     {
         private readonly IImageRepository _imageRepository;
 
+        /// <summary>
+        /// Constructs a new instance of the AlbumsController
+        /// </summary>
+        /// <param name="imageRepository">
+        /// Injected instance of the image repository
+        /// </param>
         public AlbumsController(IImageRepository imageRepository)
         {
             _imageRepository = imageRepository;
