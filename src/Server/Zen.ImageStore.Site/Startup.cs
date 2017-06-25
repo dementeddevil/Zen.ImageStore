@@ -1,30 +1,39 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
+using System.IO;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Caching;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.AspNetCore.SignalR.Configuration;
 using Swashbuckle.Swagger.Model;
 using Zen.ImageStore.Site.Domain.Interfaces;
 using Zen.ImageStore.Site.Infrastructure;
 
 namespace Zen.ImageStore.Site
 {
+    /// <summary>
+    /// Startup object encapsulates the application startup logic.
+    /// </summary>
     public class Startup
     {
+        private string _swaggerDocumentationPathName;
+
+        /// <summary>
+        /// Creates a new instance the application startup object.
+        /// </summary>
+        /// <param name="env">Hosting environment information</param>
         public Startup(IHostingEnvironment env)
         {
+            // Determine path to swagger documentation
+            _swaggerDocumentationPathName =
+                Path.Combine(env.WebRootPath, "schemas\\api\\Zen.ImageStore.Site.xml");
+
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -39,11 +48,21 @@ namespace Zen.ImageStore.Site
             Configuration = builder.Build();
         }
 
+        /// <summary>
+        /// Gets the application-level IoC container
+        /// </summary>
         public IContainer ApplicationContainer { get; private set; }
 
+        /// <summary>
+        /// Gets the application-level configuration object
+        /// </summary>
         public IConfigurationRoot Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
+        /// <summary>
+        /// ConfigureServices is called by the runtime to add services to the service container.
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
@@ -65,6 +84,11 @@ namespace Zen.ImageStore.Site
                                 }
                         });
                     options.OperationFilter<RemoveCancellationTokenOperationFilter>();
+
+                    if (File.Exists(_swaggerDocumentationPathName))
+                    {
+                        options.IncludeXmlComments(_swaggerDocumentationPathName);
+                    }
                 });
             services.AddMvc();
             services.AddMemoryCache();
@@ -96,7 +120,7 @@ namespace Zen.ImageStore.Site
             // Hookup Autofac dependency injection
             var builder = new ContainerBuilder();
             builder.Populate(services);
-            builder.RegisterInstance(Configuration);
+            builder.RegisterInstance(Configuration).As<IConfiguration>();
             builder.RegisterType<StorageClientFactory>().As<IStorageClientFactory>();
             builder.RegisterType<ImageRepository>().As<IImageRepository>();
             ApplicationContainer = builder.Build();
@@ -105,7 +129,13 @@ namespace Zen.ImageStore.Site
             return new AutofacServiceProvider(ApplicationContainer);
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        /// <summary>
+        /// Configure is called by the runtime and used to configure the HTTP request pipeline
+        /// </summary>
+        /// <param name="app"></param>
+        /// <param name="env"></param>
+        /// <param name="loggerFactory"></param>
+        /// <param name="appLifetime"></param>
         public void Configure(
             IApplicationBuilder app,
             IHostingEnvironment env,

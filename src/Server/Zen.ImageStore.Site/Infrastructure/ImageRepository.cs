@@ -53,6 +53,13 @@ namespace Zen.ImageStore.Site.Infrastructure
             _memoryCache = memoryCache;
         }
 
+        /// <summary>
+        /// Gets a list of album names for the current caller
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// Token supplied by the runtime to control the cancellation of this request.
+        /// </param>
+        /// <returns></returns>
         public async Task<ICollection<string>> ListImageContainersAsync(CancellationToken cancellationToken)
         {
             var results = new List<string>();
@@ -73,6 +80,14 @@ namespace Zen.ImageStore.Site.Infrastructure
             return results.Where(c => !string.Equals(c, DefaultContainerName, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
+        /// <summary>
+        /// Deletes an album from the current caller's collection
+        /// </summary>
+        /// <param name="container"></param>
+        /// <param name="cancellationToken">
+        /// Token supplied by the runtime to control the cancellation of this request.
+        /// </param>
+        /// <returns></returns>
         public async Task DeleteImageContainerAsync(string container, CancellationToken cancellationToken)
         {
             if (container == null)

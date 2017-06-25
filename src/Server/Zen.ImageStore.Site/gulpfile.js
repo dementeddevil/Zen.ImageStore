@@ -1,5 +1,4 @@
-﻿/// <binding AfterBuild='default' Clean='clean' />
-
+/// <binding AfterBuild='default, postbuild:swagger' Clean='clean' />
 var del = require('del'),
 	gulp = require('gulp'),
 	autoprefixer = require('gulp-autoprefixer'),
@@ -165,4 +164,10 @@ gulp.task('default', ['build']);
 gulp.task('watch', ['build'], function () {
 	gulp.watch(config.paths.tsAppSelector, ['build:js']);
 	gulp.watch(config.paths.sassAllSelector, ['build:css']);
+});
+
+gulp.task('postbuild:swagger', function () {
+    return gulp
+        .src(config.paths.swaggerSourcePath)
+        .pipe(gulp.dest(config.paths.swaggerDestinationPath));
 });

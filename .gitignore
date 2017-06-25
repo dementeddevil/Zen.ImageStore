@@ -288,3 +288,5 @@ __pycache__/
 *.xsd.cs
 **/wwwroot/css
 **/wwwroot/js
+/src/Server/Zen.ImageStore.Site/wwwroot/schemas/api/Zen.ImageStore.Site.xml
+/src/Server/Zen.ImageStore.Site/wwwroot/schemas/api/Zen.ImageStore.Site.xml

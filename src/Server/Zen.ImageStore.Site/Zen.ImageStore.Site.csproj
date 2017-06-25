@@ -11,6 +11,14 @@
     <ApplicationInsightsResourceId>/subscriptions/d69d6dbd-7838-4ec6-9f3f-c1f43a96590c/resourcegroups/Zen.ImageStore/providers/microsoft.insights/components/Zen.ImageStore</ApplicationInsightsResourceId>
     <ApplicationInsightsAnnotationResourceId>/subscriptions/d69d6dbd-7838-4ec6-9f3f-c1f43a96590c/resourceGroups/Zen.ImageStore/providers/microsoft.insights/components/Zen.ImageStore</ApplicationInsightsAnnotationResourceId>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\schema\Zen.ImageStore.Site.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>bin\schema\Zen.ImageStore.Site.xml</DocumentationFile>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Autofac" Version="4.6.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.1.0" />
@@ -28,6 +36,7 @@
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="3.13.9" />
     <PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="1.1.2" />
     <PackageReference Include="Swashbuckle" Version="6.0.0-beta902" />
+    <PackageReference Include="System.Net.Http" Version="4.3.2" />
     <PackageReference Include="WindowsAzure.Storage" Version="8.1.4" />
   </ItemGroup>
   <ItemGroup>

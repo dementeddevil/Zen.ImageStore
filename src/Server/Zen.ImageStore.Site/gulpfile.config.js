@@ -28,6 +28,9 @@ var GulpConfig = (function () {
 		this.paths.cssRoot = this.paths.webroot + 'css/';
 
 		this.paths.fontsDest = this.paths.webroot + 'fonts/';
+
+	    this.paths.swaggerSourcePath = this.paths.root + 'bin/schema/Zen.ImageStore.Site.xml';
+	    this.paths.swaggerDestinationPath = this.paths.webroot + 'schemas/api';
 	}
 	return gulpConfig;
 })();
