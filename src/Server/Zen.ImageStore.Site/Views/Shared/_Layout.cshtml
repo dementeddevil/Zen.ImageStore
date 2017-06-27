@@ -24,9 +24,9 @@
         <link rel="stylesheet" href="~/css/ie.css" />
     </environment>
     <environment names="Staging,Production">
-        <link rel="stylesheet" href="~/css/styles.css"
+        <link rel="stylesheet" href="~/css/styles.min.css"
               asp-fallback-test-class="hidden" asp-fallback-test-property="visibility" asp-fallback-test-value="hidden" />
-        <link rel="stylesheet" href="~/css/ie.css" />
+        <link rel="stylesheet" href="~/css/ie.min.css" />
     </environment>
     @Html.Raw(JavaScriptSnippet.FullScript)
 </head>
@@ -38,32 +38,32 @@
     </noscript>
     <!-- End Google Tag Manager (noscript) -->
     <a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
-    <div class="container">
-        <header class="row" role="banner">
-            <nav class="navbar navbar-toggleable-sm sticky-top navbar-inverse bg-faded">
-                <button class="navbar-toggler hidden-sm-up" type="button" data-toggle="collapse" data-target="#mainMenuNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <a asp-controller="Home" asp-action="Index" class="navbar-brand">Zen Image Store</a>
-                <div class="collapse navbar-collapse" id="mainMenuNav">
-                    <ul class="navbar-nav mr-auto">
-                        <li class="nav-item"><a asp-controller="Home" asp-action="Index" class="nav-link">Home</a></li>
-                        <li class="nav-item"><a asp-controller="Home" asp-action="About" class="nav-link">About</a></li>
-                        <li class="nav-item"><a asp-controller="Home" asp-action="Contact" class="nav-link">Contact</a></li>
-                    </ul>
-                </div>
-            </nav>
-        </header>
+    <header class="navbar navbar-toggleable-sm sticky-top navbar-inverse bg-faded" role="banner">
+        <nav class="container" role="navigation">
+            <button class="navbar-toggler hidden-sm-up" type="button" data-toggle="collapse" data-target="#mainMenuNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a asp-controller="Home" asp-action="Index" class="navbar-brand">Zen Image Store</a>
+            <div class="collapse navbar-collapse" id="mainMenuNav">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item"><a asp-controller="Home" asp-action="Index" class="nav-link">Home</a></li>
+                    <li class="nav-item"><a asp-controller="Home" asp-action="About" class="nav-link">About</a></li>
+                    <li class="nav-item"><a asp-controller="Home" asp-action="Contact" class="nav-link">Contact</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
 
-        <main class="row" role="main" id="content">
-            @RenderBody()
-        </main>
+    <main id="content" role="main">
+        @RenderBody()
+    </main>
 
-        <footer class="row" role="contentinfo">
+    <footer class="text-muted" role="contentinfo">
+        <div class="container">
             <hr />
             <p>&copy; Zen Design Software @DateTime.Now.Year</p>
-        </footer>
-    </div>
+        </div>
+    </footer>
     <script src="~/js/sitecore.js"></script>
     @RenderSection("scripts", required: false)
 </body>
