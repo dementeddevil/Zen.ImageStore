@@ -7,11 +7,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.SwaggerGen.Annotations;
 using Zen.ImageStore.Site.Infrastructure;
 
 namespace Zen.ImageStore.Site.Controllers
 {
-    [Route("api/albums")]
+    [Route("api/users/me/albums")]
     public class AlbumsController : Controller
     {
         private readonly IImageRepository _imageRepository;
@@ -27,19 +28,41 @@ namespace Zen.ImageStore.Site.Controllers
             _imageRepository = imageRepository;
         }
 
+        /// <summary>
+        /// Gets the list of albums associated with the current caller
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// An object the framework can use to cancel this operation.
+        /// </param>
+        /// <returns></returns>
         [HttpGet]
         [Route("")]
         public async Task<IActionResult> GetAlbumsAsync(
             CancellationToken cancellationToken)
         {
+            // TODO: Create an additional method that can be passed a user id
+            //  The new entry point would only be callable by API level clients
+            //  and the user would need to have authorised the client for access
             var albums = await _imageRepository
                 .ListImageContainersAsync(cancellationToken)
                 .ConfigureAwait(true);
             return Ok(albums);
         }
 
+        /// <summary>
+        /// Deletes the specified album from the current caller's list of albums.
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// An object the framework can use to cancel this operation.
+        /// </param>
+        /// <param name="album">The album identifier.</param>
+        /// <returns>
+        /// 200 If the album is deleted
+        /// 
+        /// </returns>
         [HttpDelete]
         [Route("{album}")]
+        [SwaggerOperation()]
         public async Task<IActionResult> DeleteAlbumAsync(
             CancellationToken cancellationToken, string album)
         {
@@ -49,6 +72,15 @@ namespace Zen.ImageStore.Site.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// An object the framework can use to cancel this operation.
+        /// </param>
+        /// <param name="album"></param>
+        /// <param name="pathname"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("{album}/{pathname}")]
         public async Task<IActionResult> PostEntireImageAsync(
@@ -69,6 +101,15 @@ namespace Zen.ImageStore.Site.Controllers
                 "");
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// An object the framework can use to cancel this operation.
+        /// </param>
+        /// <param name="album"></param>
+        /// <param name="pathname"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("{album}/{pathname}/chunked")]
         public async Task<IActionResult> BeginPostChunkedImageAsync(
@@ -89,6 +130,17 @@ namespace Zen.ImageStore.Site.Controllers
                 "");
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// An object the framework can use to cancel this operation.
+        /// </param>
+        /// <param name="album"></param>
+        /// <param name="pathname"></param>
+        /// <param name="uploadId"></param>
+        /// <param name="chunkId"></param>
+        /// <returns></returns>
         [HttpPatch]
         [Route("{album}/{pathname}/chunked/{imageId}/{chunkId}")]
         public async Task<IActionResult> PatchChunkedImageAsync(
@@ -100,6 +152,17 @@ namespace Zen.ImageStore.Site.Controllers
             return Accepted();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// An object the framework can use to cancel this operation.
+        /// </param>
+        /// <param name="album"></param>
+        /// <param name="pathname"></param>
+        /// <param name="uploadId"></param>
+        /// <param name="chunkIds"></param>
+        /// <returns></returns>
         [HttpPatch]
         [Route("{album}/{pathname}/chunked/{imageId}")]
         public async Task<IActionResult> CompleteChunkedImageAsync(
@@ -118,7 +181,15 @@ namespace Zen.ImageStore.Site.Controllers
                 "");
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// An object the framework can use to cancel this operation.
+        /// </param>
+        /// <param name="album"></param>
+        /// <param name="pathname"></param>
+        /// <returns></returns>
         [HttpGet]
         [Route("{album}")]
         public async Task<IEnumerable<string>> GetAlbumImagesAsync(
@@ -132,6 +203,17 @@ namespace Zen.ImageStore.Site.Controllers
             return null;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// An object the framework can use to cancel this operation.
+        /// </param>
+        /// <param name="album"></param>
+        /// <param name="pathname"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <returns></returns>
         [HttpGet]
         [Route("{album}/{pathname}", Name = "GetAlbumImageAsync")]
         public async Task<IActionResult> GetAlbumImageAsync(
