@@ -12,9 +12,15 @@ using Zen.ImageStore.Site.Infrastructure;
 
 namespace Zen.ImageStore.Site.Controllers
 {
+    /// <summary>
+    /// <c>OwnerAlbumsController</c> this api endpoint allows interaction with
+    /// albums associated with the current caller and is designed to be used by
+    /// front-end clients that represent the current logged on user.
+    /// </summary>
     [Route("api/users/me/albums")]
-    public class AlbumsController : Controller
+    public class OwnerAlbumsController : Controller
     {
+        private const string AlbumUserIdClaimType = "album:userId"; // TODO: Move this to constants class
         private readonly IImageRepository _imageRepository;
 
         /// <summary>
@@ -23,7 +29,7 @@ namespace Zen.ImageStore.Site.Controllers
         /// <param name="imageRepository">
         /// Injected instance of the image repository
         /// </param>
-        public AlbumsController(IImageRepository imageRepository)
+        public OwnerAlbumsController(IImageRepository imageRepository)
         {
             _imageRepository = imageRepository;
         }
@@ -249,9 +255,9 @@ namespace Zen.ImageStore.Site.Controllers
                 if (width.HasValue)
                 {
                     var factor =
-                        ((double) width.Value) /
-                        ((double) originalImage.Width);
-                    desiredSize.Height = (int)(((double) originalImage.Height) * factor);
+                        ((double)width.Value) /
+                        ((double)originalImage.Width);
+                    desiredSize.Height = (int)(((double)originalImage.Height) * factor);
                 }
                 else
                 {
@@ -281,6 +287,23 @@ namespace Zen.ImageStore.Site.Controllers
             renderImage.Dispose();
 
             return File(targetImageStream, blobInfo.ContentType, Path.GetFileName(pathname));
+        }
+
+        private Guid GetUserIdFromClaim()
+        {
+            if (!User.HasClaim(c => c.Type == AlbumUserIdClaimType))
+            {
+                throw new InvalidOperationException("Caller is not associated with logged on user");
+            }
+
+            var userIdText = User.FindFirst(c => c.Type == AlbumUserIdClaimType)?.Value ?? string.Empty;
+            Guid userId;
+            if (!Guid.TryParse(userIdText, out userId))
+            {
+                throw new InvalidOperationException("Unable to parse user identifier from claim value.");
+            }
+
+            return userId;
         }
 
         private ImageFormat GetImageFormatFrom(string pathname)

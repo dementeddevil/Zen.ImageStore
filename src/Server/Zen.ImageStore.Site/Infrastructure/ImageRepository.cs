@@ -10,6 +10,11 @@ using Zen.ImageStore.Site.Domain.Interfaces;
 
 namespace Zen.ImageStore.Site.Infrastructure
 {
+    // TODO: Create image service class that provides the demux between users and their specific repo
+    //  We will probably want to provision new blob stores for each user we provision (storing creds in
+    //  the key vault as we do so)
+    //  This means each user will have different SAS tokens and such.
+
     /// <summary>
     /// 
     /// </summary>
