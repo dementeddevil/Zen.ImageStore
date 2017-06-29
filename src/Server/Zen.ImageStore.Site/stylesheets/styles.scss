@@ -14,3 +14,13 @@
 
 // Bring in common styling
 //@import '_styles.scss';
+
+.bs-component {
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .carousel {
+        margin-bottom: 1rem;
+    }
+}
